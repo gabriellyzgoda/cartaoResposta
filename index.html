@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Cartão-Resposta ENEM</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #eee;
+    padding: 20px;
+}
+
+/* CONFIG */
+#config {
+    max-width: 420px;
+    background: #fff;
+    margin: 60px auto;
+    padding: 25px;
+    box-shadow: 0 0 10px rgba(0,0,0,.2);
+    border-radius: 8px;
+}
+
+#config h2 {
+    color: #e84c8b;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#config label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+#config input, #config select, #config button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#config button {
+    background: #e84c8b;
+    color: #fff;
+    border: none;
+    margin-top: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+#config button:hover {
+    background: #d63d7a;
+}
+
+/* A4 */
+#cartao {
+    display: none;
+    width: 794px;
+    min-height: 1123px;
+    background: #fff;
+    margin: 20px auto;
+    padding: 20px 25px;
+    box-shadow: 0 0 20px rgba(0,0,0,.15);
+}
+
+/* Cabeçalho */
+.topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #000;
+}
+
+.topo h1 {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.topo small {
+    font-size: 10px;
+    font-weight: normal;
+    text-transform: uppercase;
+}
+
+.dia {
+    border: 3px solid #000;
+    border-radius: 50%;
+    padding: 10px 16px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* CAMPOS ENEM - Estilo mais fiel */
+.campos {
+    border: 2px solid #000;
+    margin: 10px 0;
+    padding: 0;
+}
+
+.linha-campo {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid #000;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.linha-campo:last-child {
+    border-bottom: none;
+}
+
+.linha-campo label {
+    min-width: 120px;
+    margin-right: 10px;
+}
+
+.quadrados-container {
+    display: flex;
+    gap: 2px;
+}
+
+.quadrado {
+    width: 16px;
+    height: 20px;
+    border: 1px solid #000;
+    background: #fff;
+}
+
+.linha-unidade {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 8px;
+}
+
+.linha-unidade label {
+    margin-bottom: 3px;
+}
+
+.linha-unidade-input {
+    width: 100%;
+    border-bottom: 1px solid #000;
+    min-height: 20px;
+}
+
+.linha-assinatura {
+    min-height: 40px;
+    border-bottom: none;
+}
+
+/* Identificação de prova */
+.identificacao {
+    background: #ffccdd;
+    border: 2px solid #000;
+    padding: 6px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Instruções */
+.instrucoes {
+    border: 3px solid #e84c8b;
+    padding: 8px;
+    margin: 8px 0;
+    background: #fff;
+}
+
+.instrucoes h3 {
+    color: #e84c8b;
+    text-align: center;
+    font-size: 12px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.instrucoes ol {
+    margin-left: 15px;
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.instrucoes li {
+    margin-bottom: 4px;
+}
+
+.atencao-box {
+    border: 2px solid #e84c8b;
+    padding: 6px;
+    margin: 8px 0;
+    background: #fff5f8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.atencao-box strong {
+    color: #e84c8b;
+    font-size: 9px;
+}
+
+.atencao-box p {
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.exemplo-resposta {
+    border: 2px solid #000;
+    padding: 6px;
+    margin-top: 8px;
+    background: #f9f9f9;
+}
+
+.exemplo-resposta h4 {
+    font-size: 12px;
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.exemplo-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    margin: 3px 0;
+}
+
+/* Grade de questões */
+.grade-container {
+    border: 2px solid #000;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.grade {
+    display: flex;
+    width: 100%;
+}
+
+.coluna {
+    flex: 1;
+    border-right: 1px solid #000;
+}
+
+.coluna:last-child {
+    border-right: none;
+}
+
+.coluna-header {
+    background: #ffccdd;
+    border-bottom: 2px solid #000;
+    padding: 3px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 8px;
+    text-transform: uppercase;
+}
+
+.questao {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 5px;
+    font-size: 12px;
+    border-bottom: 1px solid #ddd;
+    min-height: 22px;
+}
+
+.questao:nth-child(even) {
+    background: #ffecf3;
+}
+
+.questao:nth-child(odd) {
+    background: #fff;
+}
+
+.questao strong {
+    min-width: 18px;
+    font-weight: bold;
+    margin-right: 4px;
+    font-size: 12px;
+}
+
+/* Opções ENEM */
+.opcoes {
+    display: flex;
+    gap: 1px;
+}
+
+.opcoes input {
+    display: none;
+}
+
+.bolinha {
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid #000;
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    background: #fff;
+    transition: all 0.2s;
+}
+
+.opcoes input:checked + .bolinha {
+    background: #000;
+    color: #fff;
+}
+
+.bolinha:hover {
+    background: #f0f0f0;
+}
+
+/* Rodapé */
+.rodape {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 9px;
+    color: #666;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+}
+
+/* Botão */
+#pdfBtn {
+    margin: 20px auto;
+    display: block;
+    padding: 12px 30px;
+    background: #e84c8b;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+#pdfBtn:hover {
+    background: #d63d7a;
+}
+
+@media print {
+    body {
+        background: #fff;
+        padding: 0;
+    }
+    #cartao {
+        box-shadow: none;
+        margin: 0;
+    }
+    #pdfBtn {
+        display: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="config">
+    <h2>⚙️ Configurar Cartão-Resposta</h2>
+
+    <label>Quantidade de questões</label>
+    <input type="number" id="qtd" min="1" max="90" value="45" placeholder="Ex: 45">
+
+    <label>Alternativas por questão</label>
+    <select id="alts">
+        <option value="4">A - D</option>
+        <option value="5" selected>A - E</option>
+    </select>
+
+    <button onclick="gerar()">✓ Gerar Cartão</button>
+</div>
+
+<div id="cartao">
+    <div class="topo">
+        <h1>CARTÃO-RESPOSTA<br><small>Simulado do Exame Nacional do Ensino Médio</small></h1>
+        <div class="dia">Biologia</div>
+    </div>
+
+    <div class="identificacao">
+        IDENTIFICAÇÃO DE PROVA
+    </div>
+
+    <div class="campos">
+        <div class="linha-campo">
+            <label>Nome completo:</label>
+            <div class="quadrados-container" id="nome-quadrados"></div>
+        </div>
+
+        <div class="linha-campo linha-unidade">
+            <label>Unidade:</label>
+            <div class="linha-unidade-input"></div>
+        </div>
+
+        <div class="linha-campo">
+            <label>Data de Nascimento:</label>
+            <div class="quadrados-container" id="data-quadrados"></div>
+        </div>
+
+        <div class="linha-campo linha-assinatura">
+            <label>Assinatura do participante:</label>
+            <div style="flex: 1;"></div>
+        </div>
+    </div>
+
+    <div class="instrucoes">
+        <h3>INSTRUÇÕES</h3>
+        <ol>
+            <li>Preencha o seu nome completo, com letras de forma, a sua data de nascimento e a sua cidade. Sua série, a turma e o número (se for aluno regularmente matriculado em alguma unidade do Sistema de Ensino).</li>
+            
+            <li>Transcreva a frase apresentada na CAPA DO SEU CADERNO DE QUESTÕES no local abaixo indicado.</li>
+            
+            <li>Não haverá substituição do CARTÃO-RESPOSTA, por isso tenha muita atenção durante a marcação das alternativas.</li>
+            
+            <li>Em hipótese alguma, você deverá deixar a sala de aplicação do exame portando o CARTÃO-RESPOSTA.</li>
+            
+            <li>O CARTÃO-RESPOSTA/FOLHA DE REDAÇÃO é o único documento que será utilizado para a correção de suas provas. Não o amasse, não o dobre, nem o rasure. O preenchimento deve ser feito com caneta esferográfica de tinta preta fabricada em material transparente. Não utilize caneta de outra cor, lápis ou lapiseira.</li>
+        </ol>
+
+        <div class="atencao-box">
+            <strong>ATENÇÃO:</strong>
+            <p>TRANSCREVA AQUI COM A SUA CALIGRAFIA USUAL, A FRASE APRESENTADA NA CAPA DO SEU CADERNO DE QUESTÕES CONFORME AS INSTRUÇÕES NELA CONTIDAS.</p>
+        </div>
+
+        <div style="border: 1px solid #e84c8b; padding: 8px; min-height: 30px; background: #fff;"></div>
+
+        <div class="exemplo-resposta">
+            <h4>EXEMPLO DE RESPOSTA</h4>
+            <div class="exemplo-item">
+                <strong>Resposta da questão X = A</strong>
+                <div class="opcoes">
+                    <label><input type="radio" checked disabled><div class="bolinha">A</div></label>
+                    <label><input type="radio" disabled><div class="bolinha">B</div></label>
+                    <label><input type="radio" disabled><div class="bolinha">C</div></label>
+                    <label><input type="radio" disabled><div class="bolinha">D</div></label>
+                    <label><input type="radio" disabled><div class="bolinha">E</div></label>
+                </div>
+            </div>
+            <div class="exemplo-item">
+                <strong>Resposta da questão X = B</strong>
+                <div class="opcoes">
+                    <label><input type="radio" disabled><div class="bolinha">A</div></label>
+                    <label><input type="radio" checked disabled><div class="bolinha">B</div></label>
+                    <label><input type="radio" disabled><div class="bolinha">C</div></label>
+                    <label><input type="radio" disabled><div class="bolinha">D</div></label>
+                    <label><input type="radio" disabled><div class="bolinha">E</div></label>
+                </div>
+            </div>
+            <p style="font-size: 12px; margin-top: 6px;">Para todas as marcações neste CARTÃO-RESPOSTA, preencha os círculos completamente e com nitidez, utilizando <strong>caneta esferográfica de tinta preta fabricada em material transparente</strong>, conforme na ilustração.</p>
+        </div>
+    </div>
+
+    <div class="grade-container">
+        <div class="grade" id="grade"></div>
+    </div>
+
+    <div class="rodape">
+        *Modelo baseado no CARTÃO-RESPOSTA do Enem
+    </div>
+
+    <button id="pdfBtn" onclick="salvarPDF()">📄 Salvar como PDF</button>
+</div>
+
+<script>
+function gerar() {
+    const qtd = parseInt(document.getElementById('qtd').value);
+    const alts = parseInt(document.getElementById('alts').value);
+    
+    if (!qtd || qtd < 1) {
+        alert('Por favor, informe uma quantidade válida de questões!');
+        return;
+    }
+
+    // Gera quadrados para nome (30 quadrados)
+    const nomeQuadrados = document.getElementById('nome-quadrados');
+    nomeQuadrados.innerHTML = '';
+    for (let i = 0; i < 30; i++) {
+        nomeQuadrados.innerHTML += '<div class="quadrado"></div>';
+    }
+
+    // Gera quadrados para data (8 quadrados)
+    const dataQuadrados = document.getElementById('data-quadrados');
+    dataQuadrados.innerHTML = '';
+    for (let i = 0; i < 8; i++) {
+        dataQuadrados.innerHTML += '<div class="quadrado"></div>';
+    }
+
+    document.getElementById('config').style.display = 'none';
+    document.getElementById('cartao').style.display = 'block';
+
+    const letras = ['A','B','C','D','E'].slice(0, alts);
+    const grade = document.getElementById('grade');
+    grade.innerHTML = '';
+
+    const colunas = 6;
+    const porColuna = Math.ceil(qtd / colunas);
+
+    for (let c = 0; c < colunas; c++) {
+        let col = document.createElement('div');
+        col.className = 'coluna';
+
+        // Header da coluna
+        let header = document.createElement('div');
+        header.className = 'coluna-header';
+        header.textContent = 'QUESTÃO/RESPOSTA';
+        col.appendChild(header);
+
+        for (let i = 1; i <= porColuna; i++) {
+            let num = c * porColuna + i;
+            if (num > qtd) break;
+
+            let questaoDiv = document.createElement('div');
+            questaoDiv.className = 'questao';
+            
+            let html = `<strong>${String(num).padStart(2, '0')}</strong><div class="opcoes">`;
+
+            letras.forEach(l => {
+                html += `
+                <label>
+                    <input type="radio" name="q${num}">
+                    <div class="bolinha">${l}</div>
+                </label>`;
+            });
+
+            html += `</div>`;
+            questaoDiv.innerHTML = html;
+            col.appendChild(questaoDiv);
+        }
+        grade.appendChild(col);
+    }
+}
+
+async function salvarPDF() {
+    const botao = document.getElementById('pdfBtn');
+    
+    botao.style.display = 'none';
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+
+    const canvas = await html2canvas(document.getElementById('cartao'), { 
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 794,
+        windowHeight: 1123
+    });
+    
+    const img = canvas.toDataURL('image/png');
+    const imgWidth = 210; // largura A4 em mm
+    const pageHeight = 297; // altura A4 em mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    // Se a imagem for maior que a página, ajusta
+    if (imgHeight > pageHeight) {
+        const ratio = pageHeight / imgHeight;
+        const adjustedWidth = imgWidth * ratio;
+        const adjustedHeight = pageHeight;
+        const xOffset = (210 - adjustedWidth) / 2;
+        pdf.addImage(img, 'PNG', xOffset, 0, adjustedWidth, adjustedHeight);
+    } else {
+        pdf.addImage(img, 'PNG', 0, 0, imgWidth, imgHeight);
+    }
+
+    pdf.save('cartao-resposta-enem.pdf');
+
+    botao.style.display = 'block';
+}
+</script>
+
+</body>
+</html>
